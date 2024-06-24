@@ -1,0 +1,30 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  username String  @unique
+  scores   Score[]
+}
+
+model Score {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  userscore Int
+  difficulty Difficulty
+  user      User     @relation(fields: [userId], references: [id])
+  @@index([userId])
+}
+
+
+enum Difficulty {
+  facile
+  moyens
+  difficile
+}

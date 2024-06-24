@@ -1,0 +1,479 @@
+let infos = document.querySelector("#infos");
+let simpleGrid = document.getElementById("simpleGrid");
+let caseclicked = 0;
+sympleLignes = 4;
+sympleColones = 8;
+nombreBombe = 3;
+let valeurliste = [];
+let timedelay = 0;
+let cellule = [];
+let drapeau = nombreBombe;
+let currentUserId = null;
+
+function initialization() {
+  for (ligne = 0; ligne < sympleLignes; ligne++) {
+    cellule[ligne] = [];
+    for (col = 0; col < sympleColones; col++) {
+      cellule[ligne][col] = {
+        type: "none",
+        number: 0,
+        titouvisible: false,
+        flag: false,
+        onclickactive: true,
+      };
+    }
+  }
+}
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function generateCoordonne() {
+  let x = getRandomInt(sympleLignes);
+  let y = getRandomInt(sympleColones);
+
+  if (cellule[x][y].type == "bombe") {
+    return generateCoordonne();
+  }
+  return { x: x, y: y };
+}
+
+function generatebombe() {
+  for (v = 0; v < nombreBombe; v++) {
+    let bomb_coord = generateCoordonne();
+    cellule[bomb_coord.x][bomb_coord.y].type = "bombe";
+    cellule[bomb_coord.x][bomb_coord.y].number = 0;
+  }
+}
+
+initialization();
+generatebombe();
+
+function generation() {
+  let content = "";
+  for (i = 0; i < sympleLignes; i++) {
+    iresult = i % 2;
+    content += `  <div class="flex justify-center items-center">`;
+    let index = 0;
+    for (j = 0; j < sympleColones; j++) {
+      jresult = j % 2;
+      index++;
+
+      if ((jresult === 0 && iresult === 0) || (iresult != 0 && jresult != 0)) {
+        content +=
+          `<div class="bg-green-500 hover:bg-green-400 border-2 w-20 h-20 font-bold flex items-center justify-center ` +
+          opacitychanger(i, j) +
+          `" onclick="clicked(${i}, ${j})" oncontextmenu="titouClick(event, ${i}, ${j})">` +
+          epo(i, j, index) +
+          `</div>`;
+      } else {
+        content +=
+          `<div class="bg-green-600 w-20 h-20 border-2 hover:bg-green-700 font-extrabold flex items-center justify-center ` +
+          opacitychanger(i, j) +
+          `" onclick="clicked(${i}, ${j})" oncontextmenu="titouClick(event, ${i}, ${j})">` +
+          epo(i, j, index) +
+          `</div>`;
+      }
+    }
+
+    content += `</div>`;
+  }
+  simpleGrid.innerHTML = content;
+}
+
+function clicked(i, j) {
+  const clickSound = document.getElementById("clickSound");
+  clickSound.play();
+  const errorSound = document.getElementById("errorSound");
+  if (cellule[i][j].flag == true) {
+    errorSound.play();
+    cellule[i][j].titouvisible == false;
+  } else if (cellule[i][j].flag == false) {
+    cellule[i][j].titouvisible = true;
+    if (cellule[i][j].flag == true) {
+      generation();
+      return ``;
+    } else if (cellule[i][j].type == "bombe" && cellule[i][j].flag == false) {
+      for (let vi = 0; vi < cellule.length; vi++) {
+        for (let vf = 0; vf < cellule[vi].length; vf++) {
+          cellule[vi][vf].titouvisible = true;
+          Swal.fire({
+            title: "Hacked ! !",
+            text: "Vous vennez de vous faire hacké ! Vous avez donc perdu !",
+            icon: "error",
+            color: "#ffffff",
+            confirmButtonText: "Regarder la grille !",
+          }).then(() => {});
+        }
+      }
+    } else if (cellule[i][j].type == "none") {
+      revelationCelluleVide(i, j);
+    } else if (cellule[i][j].type == "indice") {
+      cellule[i][j].titouvisible = true;
+    }
+    generation();
+  }
+}
+function revelationCelluleVide(i, j) {
+  const calculCelluleAlentour = [
+    [i - 1, j],
+    [i + 1, j],
+    [i, j - 1],
+    [i, j + 1],
+    [i - 1, j - 1],
+    [i - 1, j + 1],
+    [i + 1, j - 1],
+    [i + 1, j + 1],
+  ];
+
+  for (const [ni, nj] of calculCelluleAlentour) {
+    if (VerifierCellulValide(ni, nj) && !cellule[ni][nj].titouvisible) {
+      cellule[ni][nj].titouvisible = true;
+      if (cellule[ni][nj].type == "none") {
+        revelationCelluleVide(ni, nj);
+      } else if (cellule[i][j].type == "indice") {
+        cellule[i][j].titouvisible = true;
+      }
+    }
+  }
+
+  function VerifierCellulValide(i, j) {
+    return i >= 0 && i < cellule.length && j >= 0 && j < cellule[i].length;
+  }
+
+  generation();
+}
+
+function opacitychanger(i, j) {
+  if (
+    cellule[i][j].titouvisible &&
+    cellule[i][j].type !== "bombe" &&
+    cellule[i][j].flag !== true
+  ) {
+    return `bg-orange-300 hover:bg-orange-400`;
+  }
+  return ``;
+}
+
+function titouClick(e, i, j) {
+  e.preventDefault();
+
+  const audio = document.getElementById("shieldSound");
+  const shieldBroken = document.getElementById("brokenShield");
+
+  if (
+    (cellule[i][j].flag == true && cellule[i][j].titouvisible == true) ||
+    (cellule[i][j].flag == true && cellule[i][j].titouvisible == false)
+  ) {
+    shieldBroken.play();
+    cellule[i][j].flag = false;
+    nombreBombe++;
+
+    cellule[i][j].onclickactive = true;
+  } else if (
+    cellule[i][j].flag == false &&
+    cellule[i][j].titouvisible == false &&
+    nombreBombe > 0
+  ) {
+    cellule[i][j].flag = true;
+    audio.play();
+    cellule[i][j].onclickactive = false;
+    nombreBombe--;
+    if (
+      cellule[i][j].flag == true &&
+      cellule[i][j].type == "bombe" &&
+      nombreBombe === 0
+    ) {
+      Swal.fire({
+        title: "Bravo ! Vous avez gagné",
+        text: "Vous venez de gagner sur le jeu du débuggeur, j'espère que ce jeu vous a plu, ce jeu a été créé par Liam",
+        icon: "success",
+        color: "#ffffff",
+        confirmButtonText: "C'est reparti !",
+      }).then((value) => {
+        if (value.isConfirmed) {
+          saveScore();
+          window.location.reload();
+        }
+      });
+    } else if (
+      (cellule[i][j].flag == true &&
+        cellule[i][j].type == "none" &&
+        nombreBombe == 0) ||
+      (cellule[i][j].flag == true &&
+        cellule[i][j].type == "indice" &&
+        nombreBombe == 0)
+    ) {
+      for (let vi = 0; vi < cellule.length; vi++) {
+        for (let vf = 0; vf < cellule[vi].length; vf++) {
+          cellule[vi][vf].titouvisible = true;
+          Swal.fire({
+            title: "Vous avez Perdu !",
+            text: "Vous n'avez pas placé les boucliers au bon endroit !",
+            icon: "error",
+            color: "#ffffff",
+            confirmButtonText: "Regarder la grille !",
+          }).then(() => {});
+        }
+      }
+    }
+  }
+  generation();
+}
+
+function epo(i, j) {
+  if (cellule[i][j].titouvisible) {
+    if (cellule[i][j].type == "bombe" || cellule[i][j].number == "bombe") {
+      return `<img class="w-12 h-12" src="./assets/img/bug.svg" alt = "Bug">`;
+    }
+    if (cellule[i][j].number != 0 && cellule[i][j].onclickactive == true) {
+      return cellule[i][j].number;
+    }
+  }
+  if (cellule[i][j].flag == true && cellule[i][j].titouvisible == false) {
+    return `<img class="w-12 h-12" src="./assets/img/shield.svg" alt = "Shield">`;
+  }
+  return ``;
+}
+
+function getNumber(x, y) {
+  let count = 0;
+  if (cellule[x] && cellule[x][y] && cellule[x][y].type !== "bombe") {
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        if (
+          x + i >= 0 &&
+          x + i < sympleLignes &&
+          y + j >= 0 &&
+          y + j < sympleColones
+        ) {
+          if (
+            cellule[x + i] &&
+            cellule[x + i][y + j] &&
+            cellule[x + i][y + j].type == "bombe"
+          ) {
+            count++;
+          }
+        }
+      }
+    }
+    cellule[x][y].number = count;
+    if (cellule[x][y].number !== 0 && cellule[x][y].type !== "bombe")
+      cellule[x][y].type = "indice";
+  }
+}
+
+function timer() {
+  timedelay++;
+  content2 = "";
+  content2 +=
+    `<h2 class="bg-blue-500 rounded-lg p-1"><i class="fa-solid fa-flag"></i> <span class="font-bold">-</span> Nombre de drapeau : <span class="font-bold">` +
+    nombreBombe +
+    `</span> </h2> <h2 class="ml-16 rounded-lg p-1 bg-rose-500"><i class="fa-solid fa-clock"></i> <span class="font-bold">-</span> Votre temps temps (s) : <span class="font-bold">` +
+    timedelay +
+    ` s</span></h2>`;
+  infos.innerHTML = content2;
+}
+
+function generationIndice() {
+  for (ligne = 0; ligne < cellule.length; ligne++) {
+    for (col = 0; col < cellule[ligne].length; col++) {
+      getNumber(ligne, col);
+    }
+  }
+}
+generationIndice();
+generation();
+
+function detectdifficulty() {
+  let option = document.getElementById("select");
+  let value = option.value;
+
+  if (value == "1") {
+    sympleLignes = 5;
+    sympleColones = 10;
+    nombreBombe = 10;
+    timedelay = 0;
+  } else if (value == "2") {
+    sympleLignes = 10;
+    sympleColones = 20;
+    nombreBombe = 16;
+    timedelay = 0;
+  } else if (value == "0") {
+    sympleLignes = 4;
+    sympleColones = 8;
+    nombreBombe = 3;
+    timedelay = 0;
+  }
+
+  initialization();
+  generatebombe();
+  generationIndice();
+  generation();
+}
+console.log(cellule);
+
+async function openpage() {
+  const imgs = document.querySelectorAll(".hidden-img");
+  Swal.fire({
+    title: "Bienvenue dans le jeu du démineur",
+    text: "Le but du jeu est de trouver les bombes en plaçant des drapeaux grâce aux indices (chiffres) qui vous indiquent les bombes à proximité. Attention, si vous cliquez sur une bombe, vous avez perdu ! Une fois que vous cliquez sur OK, un chronomètre démarré et vous pouvez essayer de finir le jeu en battant votre record. Bonne chance !",
+    icon: "info",
+    showCancelButton: false,
+    confirmButtonText: "C'est parti !",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      setInterval(timer, 1000);
+    }
+  });
+}
+
+async function inputUsername() {
+  const { value: username } = await Swal.fire({
+    title:
+      "Entrez votre nom d'utilisateur pour enregistrer votre score de temps.",
+    input: "text",
+    inputLabel: "(appuyez sur cancel pour ne pas enregistrer votre score.)",
+    color: "#ffffff",
+    inputPlaceholder: "Ex : Titou",
+    confirmButtonText: "Sauvegarder",
+    showCancelButton: "Ne pas sauvegarder",
+  });
+
+  if (username) {
+    try {
+      const response = await fetch("http://localhost:3000/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        currentUserId = data.userId;
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+        Toast.fire({
+          icon: "success",
+          title: "User créer avec success"
+        });
+        openpage();
+      } else {
+        Swal.fire("Erreur lors de la création de l'utilisateur", "", "error");
+      }
+    } catch (error) {
+      console.error("Erreur réseau :", error);
+      Swal.fire("Erreur réseau", "Impossible de contacter le serveur", "error");
+    }
+  }
+  openpage();
+  fetchScores();
+}
+
+function openpage() {
+  const imgs = document.querySelectorAll(".hidden-img");
+  Swal.fire({
+    title: "Bienvenu dans le jeux du débuggeur",
+    text: "Le but du jeux est de trouver les bugs en placant des bouclier grace aux indices (chiffres) qui vous donneront des indices sur les bugs aux alentour, mais attention si vous cliquez sur un bug votre pc se feras hacker ! Une fois que vous cliquez sur OK un timer se lanceras et vous pourrez essayé de finir le jeux en battant votre record. Bonne chance à vous !",
+    icon: "info",
+    color: "#ffffff",
+    showCancelButton: true,
+    confirmButtonText: "C'est parti !",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      setInterval(timer, 1000);
+    }
+  });
+}
+
+function restartBtn() {
+  window.location.reload();
+}
+
+async function saveScore() {
+  if (!currentUserId) {
+    Swal.fire(
+      "Erreur",
+      "Utilisateur non identifié. Veuillez réessayer.",
+      "error"
+    );
+    return;
+  }
+  try { 
+    const response = await fetch("http://localhost:3000/score", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: currentUserId,
+        score: timedelay,
+      }),
+    });
+} catch (error) {
+    console.error("Erreur réseau :", error);
+    Swal.fire("Erreur réseau", "Impossible de contacter le serveur", "error");
+  }
+}
+
+
+async function fetchScores() {
+  try {
+    const response = await fetch("http://localhost:3000/scores");
+    if (!response.ok) {
+      throw new Error("Erreur lors de la récupération des scores");
+    }
+    const scores = await response.json();
+    displayScores(scores);
+  } catch (error) {
+    console.error("Erreur réseau :", error);
+  }
+}
+
+function displayScores(scores) {
+  const scoreList = document.getElementById("scoreList");
+  scoreList.innerHTML = "";
+
+  scores.forEach((score, index) => {
+    const listItem = document.createElement("li");
+    listItem.classList.add("mb-2");
+    listItem.classList.add("font-bold");
+    listItem.classList.add("text-xl");
+
+    if (index === 0) {
+      const emoji = document.createElement("i");
+      emoji.classList.add("fas");
+      emoji.classList.add("fa-trophy");
+      emoji.classList.add("text-yellow-500");
+      listItem.appendChild(emoji);
+    } else {
+      const number = document.createElement("span");
+      number.textContent = `${index + 1} - `;
+      listItem.appendChild(number);
+    }
+
+    const username = document.createElement("span");
+    username.textContent = ` ${score.user.username}`;
+    listItem.appendChild(username);
+
+    const scoreText = document.createElement("span");
+    scoreText.textContent = ` ${score.userscore} s`;
+    listItem.appendChild(scoreText);
+
+    scoreList.appendChild(listItem);
+  });
+}

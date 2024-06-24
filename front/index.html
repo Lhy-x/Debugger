@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demineur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://kit.fontawesome.com/b20bb2d5dd.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-borderless@4/borderless.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            spacing: {
+              300: "32rem",
+            },
+            colors: {
+              sndgreen: "#358b35",
+            },
+          },
+        },
+      };
+    </script>
+  <style>
+    .bg-custom {
+      background-image: url("./background.jpg");
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+</head>
+<body onload="inputUsername()" class="bg-custom">
+  <audio id="shieldSound" src="./assets/sounds/shield.mp3"></audio>
+  <audio id="brokenShield" src="./assets/sounds/brokenShield.mp3"></audio>
+  <audio id="clickSound" src="./assets/sounds/click.mp3"></audio>
+  <audio id="errorSound" src="./assets//sounds/error.mp3"></audio>
+  <sound id="gameOverSound" src="./assets/sounds/gameOver.mp3"></sound>
+
+    <div class="pt-8 flex items-center justify-center text-center">
+      <h1
+        class="text-white h-12 w-300 font-bold text-center text-2xl border-4 border-white bg-black rounded-br-lg rounded-tl-lg mb-4"
+      >
+        Bienvenu dans le jeux du débuggeur
+      </h1>
+    </div>
+    <section id="simpleGrid"></section>
+    <section class="flex text-center justify-center pt-6" id="infos"></section>
+<div>
+    <section class="flex justify-center mb-16 ">
+      <div class="flex justify-center text-center pt-9">
+
+        <div class="">
+          <select
+            id="select"
+            onchange="detectdifficulty()"
+            class="border-2 border-gray-500 rounded-md"
+          >
+            <option selected value="0">Facile</option>
+            <option value="1">Moyen</option>
+            <option value="2">Difficile</option>
+          </select>
+        </div>
+      </div>
+    </section>
+    </div>
+
+    <section id="restart-btn">
+      <div class="flex justify-center">
+        <button
+          onclick="restartBtn()"
+          class="bg-blue-500 rounded-lg h-12 pr-4 pl-4 font-bold"
+        >
+          START
+        </button>
+      </div>
+    </section>
+<div class="flex justify-center items-center text-center mt-4">
+        <div class="bg-black border-2 border-white w-96 p-4 rounded-lg">
+          <h1 class="font-bold text-white mb-4">Classement des scores</h1>
+          <ul id="scoreList" class="text-white"></ul>
+        </div>
+      </div>
+      
+    </div>
+</div>
+    <script src="script.js"></script>
+  </body>
+</html>
+
